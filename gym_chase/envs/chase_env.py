@@ -13,6 +13,14 @@ def get_state_map(num_rows_cols):
     return state_map
 
 
+def get_action_map():
+    action_map = dict()
+    action_map[0] = "Up"
+    action_map[1] = "Right"
+    action_map[2] = "Down"
+    action_map[3] = "Left"
+
+
 def get_matrix_string(matrix):
     matrix_string = ""
     for i in range(len(matrix)):
@@ -38,84 +46,9 @@ class ChaseEnv(gym.Env):
         self.number_of_steps = 0
         self.initial_position = initial_pos
         self.state_map = get_state_map(num_row_cols)
+        self.action_map = get_action_map()
         self.observation_space = len(self.state_map.keys())
         self.action_space = 4
-
-    def step(self, action):
-        reward = 0
-
-        if action == 0:  # Upwards Direction
-            if self.current_position[0] == 0:
-                print("Invalid Step upwards")
-                return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
-
-            self.state[self.current_position[0]][self.current_position[1]] = "-"
-            self.state[self.current_position[0] - 1][self.current_position[1]] = "X"
-            self.current_position = (self.current_position[0] - 1, self.current_position[1])
-
-            if self.current_position == self.goal:
-                print("You reached your goal!")
-                self.reached_goal = True
-                reward = 1  # TODO ver tema del reward
-                return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
-
-        elif action == 1:  # Right Direction
-            if self.current_position[1] == self.num_rows_cols - 1:
-                print("Invalid Step towards right")
-                return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
-
-            self.state[self.current_position[0]][self.current_position[1]] = "-"
-            self.state[self.current_position[0]][self.current_position[1] + 1] = "X"
-            self.current_position = (self.current_position[0], self.current_position[1] + 1)
-
-            if self.current_position == self.goal:
-                print("You reached your goal!")
-                self.reached_goal = True
-                reward = 1  # TODO ver tema del reward
-                return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
-
-        elif action == 2:  # Downwards Direction
-            if self.current_position[0] == self.num_rows_cols - 1:
-                print("Invalid Step Downwards")
-                return self.state, reward, self.reached_goal, self.number_of_steps
-            self.state[self.current_position[0]][self.current_position[1]] = "-"
-            self.state[self.current_position[0] + 1][self.current_position[1]] = "X"
-            self.current_position = (self.current_position[0] + 1, self.current_position[1])
-
-            if self.current_position == self.goal:
-                print("You reached your goal!")
-                self.reached_goal = True
-                reward = 1  # TODO ver tema del reward
-                return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
-
-        elif action == 3:  # Left Direction
-            if self.current_position[1] == 0:
-                print("Invalid Step towards Left")
-                return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
-
-            self.state[self.current_position[0]][self.current_position[1]] = "-"
-            self.state[self.current_position[0]][self.current_position[1] - 1] = "X"
-            self.current_position = (self.current_position[0], self.current_position[1] - 1)
-
-            if self.current_position == self.goal:
-                print("You reached your goal!")
-                self.reached_goal = True
-                reward = 1  # TODO ver tema del reward
-                return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
-        else:
-            raise Exception("Action is not valid since it is not in the action space")
-        return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
-
-    def reset(self):
-        self.state = [['-' for _ in range(self.num_rows_cols)] for _ in range(self.num_rows_cols)]
-        self.state[self.initial_position[0]][self.initial_position[1]] = "X"
-        self.state[self.goal[0]][self.goal[1]] = "G"
-
-    def render(self, mode='human', close=False):
-        for i in range(self.num_rows_cols):
-            for j in range(self.num_rows_cols):
-                print(self.state[i][j] + " ", end = '')
-            print()
 
     def is_valid_action(self, action):
         if action == 0 and self.current_position[0] == 0:
@@ -127,6 +60,59 @@ class ChaseEnv(gym.Env):
         if action == 3 and self.current_position[1] == 0:
             return False
         return True
+
+    def step(self, action):
+        reward = 0
+
+        if not self.is_valid_action(action):
+            print("Invalid action")
+            print("Direction was towards " + self.action_map[action])
+            return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
+
+        if action == 0:  # Upwards Direction
+            self.state[self.current_position[0]][self.current_position[1]] = "-"
+            self.state[self.current_position[0] - 1][self.current_position[1]] = "X"
+            self.current_position = (self.current_position[0] - 1, self.current_position[1])
+
+        elif action == 1:  # Right Direction
+            self.state[self.current_position[0]][self.current_position[1]] = "-"
+            self.state[self.current_position[0]][self.current_position[1] + 1] = "X"
+            self.current_position = (self.current_position[0], self.current_position[1] + 1)
+
+        elif action == 2:  # Downwards Direction
+            self.state[self.current_position[0]][self.current_position[1]] = "-"
+            self.state[self.current_position[0] + 1][self.current_position[1]] = "X"
+            self.current_position = (self.current_position[0] + 1, self.current_position[1])
+
+        elif action == 3:  # Left Direction
+            self.state[self.current_position[0]][self.current_position[1]] = "-"
+            self.state[self.current_position[0]][self.current_position[1] - 1] = "X"
+            self.current_position = (self.current_position[0], self.current_position[1] - 1)
+
+        else:
+            raise Exception("Action is not valid since it is not in the action space")
+
+        if self.current_position == self.goal:
+            print("You reached your goal!")
+            self.reached_goal = True
+            reward = 1  # TODO ver tema del reward
+            return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
+
+        return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
+
+    def reset(self):
+        self.state = [['-' for _ in range(self.num_rows_cols)] for _ in range(self.num_rows_cols)]
+        self.state[self.initial_position[0]][self.initial_position[1]] = "X"
+        self.state[self.goal[0]][self.goal[1]] = "G"
+        print("Reseted state")
+        self.render()
+
+    def render(self, mode='human', close=False):
+        for i in range(self.num_rows_cols):
+            for j in range(self.num_rows_cols):
+                print(self.state[i][j] + " ", end = '')
+            print()
+
 
 # chase_env = ChaseEnv()
 # chase_env.render()
