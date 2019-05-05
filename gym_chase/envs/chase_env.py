@@ -90,6 +90,7 @@ class ChaseEnv(gym.Env):
             self.current_position = (self.current_position[0], self.current_position[1] - 1)
 
         else:
+            print("Attempted action was " + str(action))
             raise Exception("Action is not valid since it is not in the action space")
 
         if self.current_position == self.goal:
@@ -101,11 +102,15 @@ class ChaseEnv(gym.Env):
         return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
 
     def reset(self):
+        self.number_of_steps = 0
         self.state = [['-' for _ in range(self.num_rows_cols)] for _ in range(self.num_rows_cols)]
         self.state[self.initial_position[0]][self.initial_position[1]] = "X"
         self.state[self.goal[0]][self.goal[1]] = "G"
-        print("Reseted state")
+        self.reached_goal = False
+        self.current_position = self.initial_position
+        print("Environment was reset")
         self.render()
+        print()
 
     def render(self, mode='human', close=False):
         for i in range(self.num_rows_cols):
