@@ -1,6 +1,4 @@
 import gym
-from gym import error, spaces, utils
-from gym.utils import seeding
 
 
 def get_state_map(num_rows_cols):
@@ -40,13 +38,15 @@ class ChaseEnv(gym.Env):
         self.number_of_steps = 0
         self.initial_position = initial_pos
         self.state_map = get_state_map(num_row_cols)
+        self.observation_space = len(self.state_map.keys())
+        self.action_space = 4
 
     def step(self, action):
         reward = 0
 
         if action == 0:  # Upwards Direction
             if self.current_position[0] == 0:
-                print("Invalid Step")
+                print("Invalid Step upwards")
                 return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
 
             self.state[self.current_position[0]][self.current_position[1]] = "-"
@@ -55,12 +55,13 @@ class ChaseEnv(gym.Env):
 
             if self.current_position == self.goal:
                 print("You reached your goal!")
+                self.reached_goal = True
                 reward = 1  # TODO ver tema del reward
                 return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
 
         elif action == 1:  # Right Direction
             if self.current_position[1] == self.num_rows_cols - 1:
-                print("Invalid Step")
+                print("Invalid Step towards right")
                 return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
 
             self.state[self.current_position[0]][self.current_position[1]] = "-"
@@ -69,12 +70,13 @@ class ChaseEnv(gym.Env):
 
             if self.current_position == self.goal:
                 print("You reached your goal!")
+                self.reached_goal = True
                 reward = 1  # TODO ver tema del reward
                 return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
 
         elif action == 2:  # Downwards Direction
             if self.current_position[0] == self.num_rows_cols - 1:
-                print("Invalid Step")
+                print("Invalid Step Downwards")
                 return self.state, reward, self.reached_goal, self.number_of_steps
             self.state[self.current_position[0]][self.current_position[1]] = "-"
             self.state[self.current_position[0] + 1][self.current_position[1]] = "X"
@@ -82,12 +84,13 @@ class ChaseEnv(gym.Env):
 
             if self.current_position == self.goal:
                 print("You reached your goal!")
+                self.reached_goal = True
                 reward = 1  # TODO ver tema del reward
                 return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
 
         elif action == 3:  # Left Direction
             if self.current_position[1] == 0:
-                print("Invalid Step")
+                print("Invalid Step towards Left")
                 return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
 
             self.state[self.current_position[0]][self.current_position[1]] = "-"
@@ -96,6 +99,7 @@ class ChaseEnv(gym.Env):
 
             if self.current_position == self.goal:
                 print("You reached your goal!")
+                self.reached_goal = True
                 reward = 1  # TODO ver tema del reward
                 return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
         else:
@@ -113,17 +117,27 @@ class ChaseEnv(gym.Env):
                 print(self.state[i][j] + " ", end = '')
             print()
 
+    def is_valid_action(self, action):
+        if action == 0 and self.current_position[0] == 0:
+            return False
+        if action == 1 and self.current_position[1] == self.num_rows_cols - 1:
+            return False
+        if action == 2 and self.current_position[0] == self.num_rows_cols - 1:
+            return False
+        if action == 3 and self.current_position[1] == 0:
+            return False
+        return True
 
-chase_env = ChaseEnv()
-chase_env.render()
-print(chase_env.step(2))
-chase_env.render()
-print(chase_env.step(2))
-chase_env.render()
-print(chase_env.step(1))
-chase_env.render()
-print(chase_env.step(1))
-print(chase_env.step(1))
-
-chase_env.render()
+# chase_env = ChaseEnv()
+# chase_env.render()
+# print(chase_env.step(2))
+# chase_env.render()
+# print(chase_env.step(2))
+# chase_env.render()
+# print(chase_env.step(1))
+# chase_env.render()
+# print(chase_env.step(1))
+# print(chase_env.step(1))
+#
+# chase_env.render()
 
