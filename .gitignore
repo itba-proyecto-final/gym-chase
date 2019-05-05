@@ -273,4 +273,6 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+gym_chase_env/
+
 # End of https://www.gitignore.io/api/git,macos,python,windows,intellij
