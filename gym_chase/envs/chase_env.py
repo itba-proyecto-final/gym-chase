@@ -59,14 +59,20 @@ class ChaseEnv(gym.Env):
             return False
         if action == 3 and self.current_position[1] == 0:
             return False
+        if action < 0 or action > 3:
+            return False
         return True
 
     def step(self, action):
         reward = 0
+        self.number_of_steps += 1
 
         if not self.is_valid_action(action):
             print("Invalid action")
-            print("Direction was towards " + self.action_map[action])
+            if action < 0 or action > 3:
+                print("Action out of bounds, action was " + str(action))
+            else:
+                print("Direction was towards " + self.action_map[action])
             return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
 
         if action == 0:  # Upwards Direction
@@ -111,24 +117,11 @@ class ChaseEnv(gym.Env):
         print("Environment was reset")
         self.render()
         print()
+        return self.state_map[get_matrix_string(self.state)]
 
     def render(self, mode='human', close=False):
         for i in range(self.num_rows_cols):
             for j in range(self.num_rows_cols):
                 print(self.state[i][j] + " ", end = '')
             print()
-
-
-# chase_env = ChaseEnv()
-# chase_env.render()
-# print(chase_env.step(2))
-# chase_env.render()
-# print(chase_env.step(2))
-# chase_env.render()
-# print(chase_env.step(1))
-# chase_env.render()
-# print(chase_env.step(1))
-# print(chase_env.step(1))
-#
-# chase_env.render()
 
