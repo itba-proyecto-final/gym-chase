@@ -68,22 +68,21 @@ class ChaseEnv(gym.Env):
     def calculate_reward(self):
         # Distance on x axis between goal and position increased
         if abs(self.current_position[0] - self.goal[0]) > abs(self.prev_position[0] - self.goal[0]):
-            return 0
+            return -1
         # Distance on x axis between goal and position decreased
         if abs(self.current_position[0] - self.goal[0]) < abs(self.prev_position[0] - self.goal[0]):
-            return 1
+            return 0
         # Distance on y axis between goal and position increased
         if abs(self.current_position[1] - self.goal[1]) > abs(self.prev_position[1] - self.goal[1]):
-            return 0
+            return -1
         # Distance on y axis between goal and position decreased
         if abs(self.current_position[1] - self.goal[1]) < abs(self.prev_position[1] - self.goal[1]):
-            return 1
-        return 0
+            return 0
+        return -1
 
     def step(self, action):
         self.number_of_steps += 1
         self.prev_position = self.current_position
-
 
         if not self.is_valid_action(action):
             print("Invalid action")
@@ -117,9 +116,10 @@ class ChaseEnv(gym.Env):
             print("Attempted action was " + str(action))
             raise Exception("Action is not valid since it is not in the action space")
 
+        reward = self.calculate_reward()
         if self.current_position == self.goal:
             self.reached_goal = True
-        reward = self.calculate_reward()
+            reward = 10
         return self.state_map[get_matrix_string(self.state)], reward, self.reached_goal, self.number_of_steps
 
     def reset(self):
