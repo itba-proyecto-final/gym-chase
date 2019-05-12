@@ -18,7 +18,7 @@ def read_game_file(filename):
     positions = list()
     goals = list()
     for l in lines[1:]:
-        if '-' in l:  # TODO ver cuando este con el reward tambien puesto acá
+        if '-' in l:
             [current_position, goal_position] = l.replace("\n", "").split("-")
             positions.append(int(current_position))
             goals.append(int(goal_position))
@@ -26,19 +26,31 @@ def read_game_file(filename):
     return int(rows), int(cols), positions, goals
 
 
+def read_rewards_file(filename):
+    rewards = list()
+    file = open(filename, "r")
+    lines = file.readlines()
+    for l in lines:
+        rewards.append(int(l.replace("\n", "")))
+    return rewards
+
+
+
 class MentalChaseEnv(gym.Env):
     metadata = {'render.modes': ['human']}
+
     def __init__(self):
         self.reached_goal = False
         self.number_of_steps = 0
-        self.rows, self.cols, self.positions, self.goals = read_game_file("/Users/natinavas/Downloads/grid_lights_experiment_nati_1.txt")
-        if len(self.positions) != len(self.goals) : raise Exception("Input file was invalid, different amount of goals and positions")
+        self.rows, self.cols, self.positions, self.goals = read_game_file("/Users/natinavas/Downloads/states_exp_nati.txt")
+        self.rewards = read_rewards_file("/Users/natinavas/Downloads/rewards_exp_nati.txt")
+        if len(self.positions) != len(self.goals): raise Exception("Input file was invalid, different amount of goals and positions")
         self.action_space = 4
         self.observation_space = self.rows * self.cols
-        self.state = self.positions.pop()
+        self.state = self.positions[0]
         self.initial_state = self.state
-        self.previous_state = self.positions.pop()
-        self.goal = self.goals.pop()
+        self.previous_state = self.state
+        self.goal = self.goals[0]
         self.reached_goal = False
 
     def get_row_col_from_state(self, state):
@@ -46,27 +58,10 @@ class MentalChaseEnv(gym.Env):
         col = state - row*self.cols
         return row, col
 
-    def calculate_reward(self): # TODO
-        # Distance on x axis between goal and position increased
-        row, col = self.get_row_col_from_state(self.state)
-        prev_row, prev_col = self.get_row_col_from_state(self.previous_state)
-        goal_row, goal_col = self.get_row_col_from_state(self.goal)
-
-        if abs(row - goal_row) > abs(prev_row - goal_row):
-            return -1
-        # Distance on x axis between goal and position decreased
-        if abs(row - goal_row) < abs(prev_row - goal_row):
-            return 0
-        # Distance on y axis between goal and position increased
-        if abs(col - goal_col) > abs(prev_col - goal_col):
-            return -1
-        # Distance on y axis between goal and position decreased
-        if abs(col - goal_col) < abs(prev_col - goal_col):
-            return 0
-        # If the target has been reached then give bigger prize
-        if row == goal_row and col == goal_col:
-            return 10
-        return -1
+    def calculate_reward(self):
+        if len(self.rewards) == 0:
+            raise Exception("Invalid rewards file, empty rewards list")
+        return self.rewards.pop(0)
 
     # TODO revisar porque no contempla casos bordes pero tampoco es necesario porque si se hizo una accion correcta no debería pasar nada bizarro
     def get_action(self):
@@ -83,10 +78,10 @@ class MentalChaseEnv(gym.Env):
         self.number_of_steps += 1
         self.previous_state = self.state
         if len(self.positions) != 0:
-            self.state = self.positions.pop()
-            self.goal = self.goals.pop()
+            self.state = self.positions.pop(0)
+            self.goal = self.goals.pop(0)
         if len(self.positions) == 0 or self.goal == self.state:
-            self.reached_goal == True  # TODO ver que siempre llegue al goal
+            self.reached_goal = True  # TODO ver que siempre llegue al goal
         return self.state, self.calculate_reward(), self.reached_goal, self.get_action()
 
     def reset(self):  # TODO revisar
