@@ -1,3 +1,5 @@
+import random
+
 import gym
 
 
@@ -36,7 +38,7 @@ def get_matrix_string(matrix):
 class ChaseEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, num_row_cols=5, initial_pos=(0, 0), goal=(2, 3)):
+    def __init__(self, num_row_cols=5, initial_pos=(0, 0), goal=(2, 3), accuracy=1.0):
         self.reached_goal = False
         self.state = [['-' for _ in range(num_row_cols)] for _ in range(num_row_cols)]
         self.state[initial_pos[0]][initial_pos[1]] = "X"
@@ -51,6 +53,7 @@ class ChaseEnv(gym.Env):
         self.action_map = get_action_map()
         self.observation_space = len(self.state_map.keys())
         self.action_space = 4
+        self.accuracy = accuracy
 
     def is_valid_action(self, action):
         if action == 0 and self.current_position[0] == 0:
@@ -66,19 +69,19 @@ class ChaseEnv(gym.Env):
         return True
 
     def calculate_reward(self):
+        reward = 0
         # Distance on x axis between goal and position increased
         if abs(self.current_position[0] - self.goal[0]) > abs(self.prev_position[0] - self.goal[0]):
-            return -1
-        # Distance on x axis between goal and position decreased
-        if abs(self.current_position[0] - self.goal[0]) < abs(self.prev_position[0] - self.goal[0]):
-            return 0
+            reward = -1
         # Distance on y axis between goal and position increased
         if abs(self.current_position[1] - self.goal[1]) > abs(self.prev_position[1] - self.goal[1]):
-            return -1
-        # Distance on y axis between goal and position decreased
-        if abs(self.current_position[1] - self.goal[1]) < abs(self.prev_position[1] - self.goal[1]):
+            reward = -1
+        # Return correct reward with accuracy
+        if random.uniform(0, 1) < self.accuracy:
+            return reward
+        else:
             return 0
-        return -1
+
 
     def step(self, action):
         self.number_of_steps += 1
