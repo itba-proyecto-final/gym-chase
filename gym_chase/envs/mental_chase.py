@@ -1,6 +1,12 @@
 import gym
 from math import floor
 
+POSITION = 0
+GOAL = 1
+REWARD = 2
+
+__END_OF_EXPERIENCE = "--\n"
+
 
 def get_action_map():
     action_map = dict()
@@ -15,15 +21,29 @@ def read_game_file(filename):
     file = open(filename, "r")
     lines = file.readlines()
     [rows, cols] = lines[0].replace("\n", "").split("x")
-    positions = list()
-    goals = list()
+    experiences = list()
+    experience = (list(), list(), list())
     for l in lines[1:]:
-        if '-' in l:
-            [current_position, goal_position] = l.replace("\n", "").split("-")
-            positions.append(int(current_position))
-            goals.append(int(goal_position))
+        if l != "\n":
+            if '-' in l and l != __END_OF_EXPERIENCE and not l.startswith("-"):
+                [current_position, goal_position] = l.replace("\n", "").split("-")
+                experience[POSITION].append(int(current_position))
+                experience[GOAL].append(int(goal_position))
+            elif l == __END_OF_EXPERIENCE:
+                check_experience_validity(experience)
+                experiences.append(experience)
+                experience = (list(), list(), list())
+            else:
+                experience[REWARD].append(int(l.replace("\n", "")))
     file.close()
-    return int(rows), int(cols), positions, goals
+    return int(rows), int(cols), experiences
+
+
+def check_experience_validity(experience):
+    if len(experience[REWARD]) != len(experience[POSITION]):
+        raise Exception("Input file was invalid, different amount of rewards and positions")
+    if len(experience[REWARD]) != len(experience[GOAL]):
+        raise Exception("Input file was invalid, different amount of goals and positions")
 
 
 def read_rewards_file(filename):
@@ -35,33 +55,33 @@ def read_rewards_file(filename):
     return rewards
 
 
-
 class MentalChaseEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self):
         self.reached_goal = False
         self.number_of_steps = 0
-        self.rows, self.cols, self.positions, self.goals = read_game_file("/Users/natinavas/Downloads/states_exp_nati.txt")
-        self.rewards = read_rewards_file("/Users/natinavas/Downloads/rewards_exp_nati.txt")
-        if len(self.positions) != len(self.goals): raise Exception("Input file was invalid, different amount of goals and positions")
+        self.rows, self.cols, self.experiences = read_game_file(
+            "/Users/franbartolome/Desktop/rewards_states.txt")
         self.action_space = 4
+        # TODO: change if goal moves
         self.observation_space = self.rows * self.cols
-        self.state = self.positions[0]
+        self.amount_of_experiences = len(self.experiences)
+        self.state = self.experiences[0][POSITION][0]
         self.initial_state = self.state
         self.previous_state = self.state
-        self.goal = self.goals[0]
+        self.goal = self.experiences[0][GOAL][0]
         self.reached_goal = False
+        self.turn = 0
+        self.already_reset = False
 
     def get_row_col_from_state(self, state):
         row = floor(state / self.cols)
-        col = state - row*self.cols
+        col = state - row * self.cols
         return row, col
 
     def calculate_reward(self):
-        if len(self.rewards) == 0:
-            raise Exception("Invalid rewards file, empty rewards list")
-        return self.rewards.pop(0)
+        return self.experiences[0][REWARD].pop(0)
 
     # TODO revisar porque no contempla casos bordes pero tampoco es necesario porque si se hizo una accion correcta no debería pasar nada bizarro
     def get_action(self):
@@ -77,23 +97,27 @@ class MentalChaseEnv(gym.Env):
     def step(self):
         self.number_of_steps += 1
         self.previous_state = self.state
-        if len(self.positions) != 0:
-            self.state = self.positions.pop(0)
-            self.goal = self.goals.pop(0)
-        if len(self.positions) == 0 or self.goal == self.state:
+        if len(self.experiences[0][POSITION]) != 0:
+            self.state = self.experiences[0][POSITION].pop(0)
+            self.goal = self.experiences[0][GOAL].pop(0)
+        if len(self.experiences[0][POSITION]) == 0 or self.goal == self.state:
             self.reached_goal = True  # TODO ver que siempre llegue al goal
         return self.state, self.calculate_reward(), self.reached_goal, self.get_action()
 
-    def reset(self):  # TODO revisar
+    def reset(self):
+        if self.already_reset:
+            self.experiences.pop(0)
+            self.initial_state = self.experiences[0][POSITION][0]
         self.number_of_steps = 0
         self.state = self.initial_state
         self.reached_goal = False
+        self.already_reset = True
         return self.state
 
     def render(self, mode='human', close=False):
         for i in range(self.rows):
             for j in range(self.cols):
-                if i*self.cols + j == self.state:
+                if i * self.cols + j == self.state:
                     print("X", end='')
                 else:
                     print("-", end='')
