@@ -6,7 +6,7 @@ POSITION = 0
 GOAL = 1
 REWARD = 2
 
-__END_OF_EXPERIENCE = "--\n"
+END_OF_EXPERIENCE = "--\n"
 
 UP = 0
 RIGHT = 1
@@ -21,36 +21,6 @@ def get_action_map():
     action_map[DOWN] = "Down"
     action_map[LEFT] = "Left"
     return action_map
-
-
-def read_game_file(filename):
-    """
-    Read a file containing the state and return amount of rows and cols and a list with information on each experience
-    :param filename: File from where the game is read, complete path
-    :return: amount of rows, amount of cols and a list of experiences where each experience is identified by three lists
-    one containing all positions, another containing all goals and the last one containing all rewards, all three lists
-    should have the same size, since at the same position all three should represent the state of the game at one given
-    moment
-    """
-    file = open(filename, "r")
-    lines = file.readlines()
-    [rows, cols] = lines[0].replace("\n", "").split("x")
-    experiences = list()
-    experience = (list(), list(), list())  # position, goal, reward
-    for line in lines[1:]:
-        if line != "\n":
-            if '-' in line and line != __END_OF_EXPERIENCE and not line.startswith("-"):
-                [current_position, goal_position] = line.replace("\n", "").split("-")
-                experience[POSITION].append(int(current_position))
-                experience[GOAL].append(int(goal_position))
-            elif line == __END_OF_EXPERIENCE:
-                check_experience_validity(experience)
-                experiences.append(experience)
-                experience = (list(), list(), list())
-            else:
-                experience[REWARD].append(int(line.replace("\n", "")))
-    file.close()
-    return int(rows), int(cols), experiences
 
 
 def check_experience_validity(experience):
@@ -75,10 +45,8 @@ class MentalChaseEnv(gym.Env):
     def __init__(self):
         self.reached_goal = False
         self.number_of_steps = 0
-        self.rows, self.cols, self.experiences = read_game_file(
-            "/Users/franbartolome/Desktop/rewards_states.txt")
+        self.rows, self.cols, self.experiences = None, None, None
         self.action_space = 4
-        # TODO: change if goal moves
         self.observation_space = self.rows * self.cols
         self.amount_of_experiences = len(self.experiences)
         self.state = self.experiences[0][POSITION][0]
@@ -88,6 +56,35 @@ class MentalChaseEnv(gym.Env):
         self.reached_goal = False
         self.turn = 0
         self.already_reset = False
+
+    def set_game_file(self, game_file):
+        """
+        Read a file containing the state and return amount of rows and cols and a list with information on each experience
+        :param filename: File from where the game is read, complete path
+        :return: amount of rows, amount of cols and a list of experiences where each experience is identified by three lists
+        one containing all positions, another containing all goals and the last one containing all rewards, all three lists
+        should have the same size, since at the same position all three should represent the state of the game at one given
+        moment
+        """
+        file = open(game_file, "r")
+        lines = file.readlines()
+        [rows, cols] = lines[0].replace("\n", "").split("x")
+        experiences = list()
+        experience = (list(), list(), list())  # position, goal, reward
+        for line in lines[1:]:
+            if line != "\n":
+                if '-' in line and line != END_OF_EXPERIENCE and not line.startswith("-"):
+                    [current_position, goal_position] = line.replace("\n", "").split("-")
+                    experience[POSITION].append(int(current_position))
+                    experience[GOAL].append(int(goal_position))
+                elif line == END_OF_EXPERIENCE:
+                    check_experience_validity(experience)
+                    experiences.append(experience)
+                    experience = (list(), list(), list())
+                else:
+                    experience[REWARD].append(int(line.replace("\n", "")))
+        file.close()
+        self.rows, self.cols, self.experiences = int(rows), int(cols), experiences
 
     def get_row_col_from_state(self, state):
         """
