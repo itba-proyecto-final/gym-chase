@@ -47,12 +47,12 @@ class MentalChaseEnv(gym.Env):
         self.number_of_steps = 0
         self.rows, self.cols, self.experiences = None, None, None
         self.action_space = 4
-        self.observation_space = self.rows * self.cols
-        self.amount_of_experiences = len(self.experiences)
-        self.state = self.experiences[0][POSITION][0]
+        self.observation_space = None
+        self.amount_of_experiences = None
+        self.state = None
         self.initial_state = self.state
         self.previous_state = self.state
-        self.goal = self.experiences[0][GOAL][0]
+        self.goal = None
         self.reached_goal = False
         self.turn = 0
         self.already_reset = False
@@ -85,6 +85,12 @@ class MentalChaseEnv(gym.Env):
                     experience[REWARD].append(int(line.replace("\n", "")))
         file.close()
         self.rows, self.cols, self.experiences = int(rows), int(cols), experiences
+        self.observation_space = self.rows * self.cols
+        self.amount_of_experiences = len(self.experiences)
+        self.state = self.experiences[0][POSITION][0]
+        self.goal = self.experiences[0][GOAL][0]
+        self.initial_state = self.state
+        self.previous_state = self.state
 
     def get_row_col_from_state(self, state):
         """
