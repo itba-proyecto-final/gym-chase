@@ -1,5 +1,4 @@
 import random
-
 import gym
 
 
@@ -54,6 +53,10 @@ class ChaseEnv(gym.Env):
         self.observation_space = len(self.state_map.keys())
         self.action_space = 4
         self.accuracy = accuracy
+
+    def set_num_row_cols(self, row_cols):
+        self.num_rows_cols = row_cols
+        self.state_map = get_state_map(row_cols)
 
     def is_valid_action(self, action):
         if action == 0 and self.current_position[0] == 0:
@@ -131,8 +134,6 @@ class ChaseEnv(gym.Env):
         self.state[self.goal[0]][self.goal[1]] = "G"
         self.reached_goal = False
         self.current_position = self.initial_position
-        print(self.state)
-        print(self.goal)
         return self.state_map[get_matrix_string(self.state)]
 
     def render(self, mode='human', close=False):
