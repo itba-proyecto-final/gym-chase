@@ -166,3 +166,21 @@ class MentalChaseEnv(gym.Env):
                 else:
                     print("-", end='')
             print()
+
+    def is_valid_action(self, action):
+        """
+        Checks if given the current state an action is valid
+        :param action: Action for which it's checking it's validity
+        :return: Boolean representing if it's boolean or not
+        """
+        if self.state < self.cols and action == UP:
+            return False
+        if self.state >= self.rows*self.cols - self.cols and action == DOWN:
+            return False
+        if self.state % (self.cols) == 0 and action == LEFT:
+            return False
+        if self.state % (self.cols) == self.cols - 1 and action == RIGHT:
+            return False
+        return True
+
+
