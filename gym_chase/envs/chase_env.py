@@ -37,7 +37,7 @@ def get_matrix_string(matrix):
 class ChaseEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, num_row_cols=10, initial_pos=(0, 0), goal=(6, 4), accuracy=1.0):
+    def __init__(self, num_row_cols=5, initial_pos=(0, 0), goal=(4, 4), accuracy=1.0):
         self.reached_goal = False
         self.state = [['-' for _ in range(num_row_cols)] for _ in range(num_row_cols)]
         self.state[initial_pos[0]][initial_pos[1]] = "X"
@@ -86,6 +86,11 @@ class ChaseEnv(gym.Env):
             return 0
 
     def step(self, action):
+        """
+        Iterate from one state to the next given an action
+        :param action: Action that will change the state
+        :return: state, reward, reachedGoal, numberOfSteps
+        """
         self.number_of_steps += 1
         self.prev_position = self.current_position
 
